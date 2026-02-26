@@ -33,13 +33,18 @@ async def send_email(to_email: str, subject: str, body: str, html_body: str = No
             html_part = MIMEText(html_body, 'html')
             message.attach(html_part)
         
+        # Use SSL/TLS for port 465, STARTTLS for others (like 587)
+        use_tls = (SMTP_PORT == 465)
+        start_tls = (SMTP_PORT == 587)
+        
         await aiosmtplib.send(
             message,
             hostname=SMTP_HOST,
             port=SMTP_PORT,
             username=SMTP_USER,
             password=SMTP_PASSWORD,
-            start_tls=True
+            use_tls=use_tls,
+            start_tls=start_tls
         )
         
         logger.info(f"Email sent successfully to {to_email}")
