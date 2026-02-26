@@ -1,8 +1,10 @@
-import aiosmtplib
+import ssl
+import certifi
+import logging
+import os
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import os
-import logging
+import aiosmtplib
 
 logger = logging.getLogger(__name__)
 
@@ -35,12 +37,16 @@ async def send_email(to_email: str, subject: str, body: str, html_body: str = No
             html_part = MIMEText(html_body, 'html')
             message.attach(html_part)
         
+        # Create explicit SSL context using certifi for security and reliability
+        context = ssl.create_default_context(cafile=certifi.where())
+        
         # Use a more manual connection for better debugging
         smtp_client = aiosmtplib.SMTP(
             hostname=SMTP_HOST,
             port=SMTP_PORT,
             use_tls=(SMTP_PORT == 465),
-            timeout=30
+            timeout=30,
+            tls_context=context
         )
         
         async with smtp_client:
