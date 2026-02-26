@@ -1,65 +1,48 @@
-import ssl
-import certifi
 import logging
 import os
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-import aiosmtplib
+import resend
 
 logger = logging.getLogger(__name__)
 
-SMTP_HOST = os.environ.get('SMTP_HOST', '')
-SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
-SMTP_USER = os.environ.get('SMTP_USER', '')
-SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
+# Resend Configuration
+RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+# Resend requires a verified domain. If not verified, it might fail for custom 'from' addresses.
+# For testing, they can use 'onboarding@resend.dev'
+FROM_EMAIL = os.environ.get('FROM_EMAIL', 'onboarding@resend.dev')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'reyanshschool@gmail.com')
 
+# Initialize resend
+if RESEND_API_KEY:
+    resend.api_key = RESEND_API_KEY
+
 async def send_email(to_email: str, subject: str, body: str, html_body: str = None):
-    """Send email using aiosmtplib"""
-    # Skip if SMTP not configured
-    if not SMTP_HOST or not SMTP_USER:
-        logger.warning(f"SMTP not configured. Host: {SMTP_HOST}, User: {SMTP_USER}. Email not sent.")
+    """Send email using Resend API"""
+    if not RESEND_API_KEY:
+        logger.warning("RESEND_API_KEY not configured. Email not sent.")
         logger.info(f"Would have sent email to {to_email}: {subject}")
         return False
     
-    logger.info(f"Attempting to send email to {to_email} via {SMTP_HOST}:{SMTP_PORT} (User: {SMTP_USER})")
+    logger.info(f"Attempting to send email to {to_email} via Resend API")
     
     try:
-        message = MIMEMultipart('alternative')
-        message['From'] = SMTP_USER
-        message['To'] = to_email
-        message['Subject'] = subject
-        
-        text_part = MIMEText(body, 'plain')
-        message.attach(text_part)
+        params = {
+            "from": FROM_EMAIL,
+            "to": to_email,
+            "subject": subject,
+            "text": body,
+        }
         
         if html_body:
-            html_part = MIMEText(html_body, 'html')
-            message.attach(html_part)
+            params["html"] = html_body
+
+        # Resend's library is synchronous, but we'll wrap it if needed. 
+        # For now, we'll just call it directly as it's a simple HTTPS post.
+        r = resend.Emails.send(params)
         
-        # Create explicit SSL context using certifi for security and reliability
-        context = ssl.create_default_context(cafile=certifi.where())
-        
-        # Use a more manual connection for better debugging
-        smtp_client = aiosmtplib.SMTP(
-            hostname=SMTP_HOST,
-            port=SMTP_PORT,
-            use_tls=(SMTP_PORT == 465),
-            timeout=30,
-            tls_context=context
-        )
-        
-        async with smtp_client:
-            if SMTP_PORT == 587:
-                await smtp_client.starttls()
-            
-            await smtp_client.login(SMTP_USER, SMTP_PASSWORD)
-            await smtp_client.send_message(message)
-        
-        logger.info(f"Email sent successfully to {to_email}")
+        logger.info(f"Email sent successfully via Resend. ID: {r.get('id')}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)} (Type: {type(e).__name__})")
+        logger.error(f"Failed to send email via Resend: {str(e)} (Type: {type(e).__name__})")
         return False
 
 async def send_admission_enquiry_notification(enquiry_data: dict):
