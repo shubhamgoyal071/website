@@ -16,9 +16,11 @@ async def send_email(to_email: str, subject: str, body: str, html_body: str = No
     """Send email using aiosmtplib"""
     # Skip if SMTP not configured
     if not SMTP_HOST or not SMTP_USER:
-        logger.warning("SMTP not configured. Email not sent.")
+        logger.warning(f"SMTP not configured. Host: {SMTP_HOST}, User: {SMTP_USER}. Email not sent.")
         logger.info(f"Would have sent email to {to_email}: {subject}")
         return False
+    
+    logger.info(f"Attempting to send email to {to_email} via {SMTP_HOST}:{SMTP_PORT} (User: {SMTP_USER})")
     
     try:
         message = MIMEMultipart('alternative')
@@ -44,7 +46,8 @@ async def send_email(to_email: str, subject: str, body: str, html_body: str = No
             username=SMTP_USER,
             password=SMTP_PASSWORD,
             use_tls=use_tls,
-            start_tls=start_tls
+            start_tls=start_tls,
+            timeout=30
         )
         
         logger.info(f"Email sent successfully to {to_email}")

@@ -42,6 +42,24 @@ app.mount("/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="up
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
 
+# ========== TEST ENDPOINTS ==========
+@api_router.get("/test-email")
+async def test_email():
+    try:
+        from email_service import send_email, ADMIN_EMAIL
+        success = await send_email(
+            ADMIN_EMAIL,
+            "Test Email from Reyansh School",
+            "If you are reading this, your email configuration is working!",
+            "<h1>Email Fix Verified</h1><p>The backend is now successfully sending emails.</p>"
+        )
+        if success:
+            return {"success": True, "message": f"Test email sent successfully to {ADMIN_EMAIL}"}
+        else:
+            return {"success": False, "message": "Failed to send test email. Check server logs."}
+    except Exception as e:
+        logger.error(f"Error in test-email endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 
