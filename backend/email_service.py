@@ -35,25 +35,25 @@ async def send_email(to_email: str, subject: str, body: str, html_body: str = No
             html_part = MIMEText(html_body, 'html')
             message.attach(html_part)
         
-        # Use SSL/TLS for port 465, STARTTLS for others (like 587)
-        use_tls = (SMTP_PORT == 465)
-        start_tls = (SMTP_PORT == 587)
-        
-        await aiosmtplib.send(
-            message,
+        # Use a more manual connection for better debugging
+        smtp_client = aiosmtplib.SMTP(
             hostname=SMTP_HOST,
             port=SMTP_PORT,
-            username=SMTP_USER,
-            password=SMTP_PASSWORD,
-            use_tls=use_tls,
-            start_tls=start_tls,
+            use_tls=(SMTP_PORT == 465),
             timeout=30
         )
+        
+        async with smtp_client:
+            if SMTP_PORT == 587:
+                await smtp_client.starttls()
+            
+            await smtp_client.login(SMTP_USER, SMTP_PASSWORD)
+            await smtp_client.send_message(message)
         
         logger.info(f"Email sent successfully to {to_email}")
         return True
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+        logger.error(f"Failed to send email: {str(e)} (Type: {type(e).__name__})")
         return False
 
 async def send_admission_enquiry_notification(enquiry_data: dict):
