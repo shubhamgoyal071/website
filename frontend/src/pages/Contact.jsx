@@ -8,6 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { toast } from 'sonner';
 import { schoolInfo, infrastructureImages } from '../mock';
+import { API_BASE_URL } from '../constants';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -25,7 +26,7 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('http://localhost:8000/api/contact/message', formData);
+      const response = await axios.post(`${API_BASE_URL}/api/contact/message`, formData);
       if (response.data.success) {
         toast.success('Message sent successfully! We will get back to you soon.');
         setFormData({

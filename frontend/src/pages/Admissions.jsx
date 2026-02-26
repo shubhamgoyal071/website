@@ -9,6 +9,7 @@ import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { toast } from 'sonner';
 import { admissionProcess, schoolInfo, studentLifeImages } from '../mock';
+import { API_BASE_URL } from '../constants';
 import prospectus from '../assets/documents/Reyansh_Prospectus.pdf';
 
 const Admissions = () => {
@@ -39,7 +40,7 @@ const Admissions = () => {
         message: formData.message
       };
 
-      const response = await axios.post('http://localhost:8000/api/admission-enquiry', payload);
+      const response = await axios.post(`${API_BASE_URL}/api/admission-enquiry`, payload);
       if (response.data.success || response.data.id) {
         toast.success('Enquiry submitted successfully! We will contact you soon.');
         setFormData({

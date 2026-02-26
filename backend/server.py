@@ -11,6 +11,7 @@ load_dotenv(ROOT_DIR / '.env')
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
 import logging
+import certifi
 from typing import List, Optional
 from datetime import datetime
 import uuid
@@ -25,7 +26,7 @@ from email_service import send_admission_enquiry_notification, send_contact_mess
 
 # MongoDB connection
 mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
+client = AsyncIOMotorClient(mongo_url, tlsCAFile=certifi.where())
 db = client[os.environ['DB_NAME']]
 
 # Create uploads directory
